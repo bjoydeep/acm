@@ -1,6 +1,6 @@
 # Explore using ACM Observability
 
-Using Grafana Explorer with PromQL, Search UI and KUI, ACM allows us to explore and interrogate the data collected from across the fleet of managed clusters. This allows you to inspect the state of he fleet, test your hypothesis as well as problem diagnosis. Follow this document to do a dip your feet into this fascinating and empowering world.
+Using Grafana Explorer with PromQL, Search UI and Visual Web Terminal, ACM allows us to explore and interrogate the data collected from across the fleet of managed clusters. This allows you to inspect the state of he fleet, test your hypothesis as well as problem diagnosis. Follow this document to do a dip your feet into this fascinating and empowering world.
 
 ## Using Search
 Hit the `search icon` on the top right hand corner in ACM UI
@@ -120,5 +120,23 @@ sum(rate(etcd_object_counts{resource!="events"}[5m]) ) by (cluster,resource) >0
 ```
 Can you figure this out yourself now. Hint: This may help [Grafana Explore](https://grafana.com/docs/grafana/latest/explore/) .
 ```
+
+## Using Visual Web Terminal
+Hit the `Visual Web Terminal icon` on the top right hand corner in ACM UI
+
+#### Explore information about a pod
+```
+In the Visual Web Terminal
+Enter: kubectl get ns
+Select on UI: open-cluster-management
+Enter: kubectl get pods
+Select on the UI: *redisgraph* pod
+Explore the different tabs
+```
+```
+Did you also see that not only can you see logs and events, you can log into the terminal of that pod and run a command!
+```
+
+
 
 
