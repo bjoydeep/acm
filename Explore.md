@@ -1,6 +1,6 @@
 # Explore using ACM Observability
 
-Using Grafana Explorer with PromQL, Search UI and KUI, ACM allows us to explore and interrogate the data collected from across the fleet of managed clusters. Follow this document to do a dip your feet into this fascinating and empowering world.
+Using Grafana Explorer with PromQL, Search UI and KUI, ACM allows us to explore and interrogate the data collected from across the fleet of managed clusters. This allows you to inspect the state of he fleet, test your hypothesis as well as problem diagnosis. Follow this document to do a dip your feet into this fascinating and empowering world.
 
 ## Using Search
 Hit the `search icon` on the top right hand corner in ACM UI
@@ -8,6 +8,9 @@ Hit the `search icon` on the top right hand corner in ACM UI
 ### Look for any resources that was created in last hour
 ```
 Hint: Click on the shortcut in the UI called "Create Last Hour"
+```
+```
+Can you figure out how to find out the namespaces that were created in the last hour - hint add a filter: kind:namespace
 ```
 ### Search for a "resource" with a name that contains "a string" across any managed cluster
 ```
@@ -37,6 +40,14 @@ Hint: Click on the shortcut in the UI called "Unhealthy Pods" and then type in c
 ```
 Hint: You should be able to follow directions in the UI to save it- and then come back to it at a later time.
 ```
+### Look at all things created/related to an Operator/Custom Resource
+```
+Hint: Type in kind:multiclusterobservability
+```
+```
+multiclusterobservability is an instance of the MultiClusterObservability that you may have created when you enabled Observability in RHACM. You can extend this to check what was created in the last hour around this CR as well or extend to other custom resources as well.
+```
+
 ### Look at logs of any POD on a managed cluster
 ```
 Select Pods by any one of the techniques shown above, drill down to one Pod and see the Logs
@@ -98,8 +109,16 @@ or
 sum(container_memory_working_set_bytes{cluster="$cluster", namespace="$namespace", pod="$pod", container!="POD", container!=""}) by (container)
 ```
 ```
-Substitute the $pod etc 
+Substitute the $pod etc . For example: sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate{namespace="open-cluster-management", container!="POD", cluster="local-cluster",pod=~".*redis.*"}) by (container)
 ```
-
+### Check the rate of object creation in API Server across all clusters excluding event objects
+```
+Type into the Explorer Bar:
+sum(rate(etcd_object_counts{resource!="events"}[5m]) ) by (cluster,resource) >0
+```
+### Check if there is a correlation between object count in API Server and CPU, Memory of a POD or alerts
+```
+Can you figure this out yourself now. Hint: This may help [Grafana Explore](https://grafana.com/docs/grafana/latest/explore/) .
+```
 
 
