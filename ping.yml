@@ -1,4 +1,4 @@
 - name: Ping Sample
-  hosts: all
+  hosts: '{{ target }}'
   tasks:
     - action: ping
