@@ -1,0 +1,175 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: search-metrics-enable
+  namespace: default
+  annotations:
+    policy.open-cluster-management.io/categories: ACM-Health
+    policy.open-cluster-management.io/standards: ACM-Health
+    policy.open-cluster-management.io/controls: ACM-Health
+spec:
+  disabled: false
+  remediationAction: enforce
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-role-1
+        spec:
+          remediationAction: enforce
+          severity: high
+          namespaceSelector:
+            exclude:
+              - kube-*
+            include:
+              - default
+          object-templates:
+            - complianceType: mustonlyhave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: ClusterRole
+                metadata:
+                  name: search-metric-role
+                rules:
+                  - apiGroups:
+                      - ""
+                      - apps
+                    resources:
+                      - pods
+                      - services
+                      - endpoints
+                    verbs:
+                      - get
+                      - list
+                      - watch
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-rb-1
+        spec:
+          remediationAction: enforce
+          severity: high
+          namespaceSelector:
+            exclude:
+              - kube-*
+            include:
+              - default
+          object-templates:
+            - complianceType: mustonlyhave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: ClusterRoleBinding
+                metadata:
+                  name: search-metric-rb
+                subjects:
+                  - name: prometheus-k8s
+                    namespace: openshift-monitoring
+                    kind: ServiceAccount
+                roleRef:
+                  name: search-metric-role
+                  apiGroup: rbac.authorization.k8s.io
+                  kind: ClusterRole
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-sm-1
+        spec:
+          remediationAction: enforce
+          severity: high
+          namespaceSelector:
+            exclude:
+              - kube-*
+            include:
+              - default
+          object-templates:
+            - complianceType: mustonlyhave
+              objectDefinition:
+                apiVersion: monitoring.coreos.com/v1
+                kind: ServiceMonitor
+                metadata:
+                  name: search-api-sm
+                  namespace: openshift-monitoring
+                spec:
+                  endpoints:
+                    - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      interval: 60s
+                      port: search-api
+                      scheme: https
+                      scrapeTimeout: 10s
+                      tlsConfig:
+                        insecureSkipVerify: true
+                  jobLabel: search-app
+                  namespaceSelector:
+                    matchNames:
+                      - open-cluster-management
+                  selector:
+                    matchLabels:
+                      search: search-api
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-sm-2
+        spec:
+          remediationAction: enforce
+          severity: high
+          namespaceSelector:
+            exclude:
+              - kube-*
+            include:
+              - default
+          object-templates:
+            - complianceType: mustonlyhave
+              objectDefinition:
+                apiVersion: monitoring.coreos.com/v1
+                kind: ServiceMonitor
+                metadata:
+                  name: search-indexer-sm
+                  namespace: openshift-monitoring
+                spec:
+                  endpoints:
+                    - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+                      interval: 60s
+                      port: search-indexer
+                      scheme: https
+                      scrapeTimeout: 10s
+                      tlsConfig:
+                        insecureSkipVerify: true
+                  jobLabel: search-app
+                  namespaceSelector:
+                    matchNames:
+                      - open-cluster-management
+                  selector:
+                    matchLabels:
+                      search: search-indexer                     
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: search-metrics-enable-placement
+  namespace: default
+spec:
+  clusterSelector:
+    matchExpressions:
+      - key: local-cluster
+        operator: In
+        values:
+          - "true"
+  clusterConditions: []
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: search-metrics-enable-placement
+  namespace: default
+placementRef:
+  name: search-metrics-enable-placement
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+subjects:
+  - name: search-metrics-enable
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
